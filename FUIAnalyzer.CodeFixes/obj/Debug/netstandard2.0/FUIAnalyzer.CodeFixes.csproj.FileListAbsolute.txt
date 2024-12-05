@@ -1,0 +1,15 @@
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\bin\Debug\netstandard2.0\FUIAnalyzer.CodeFixes.deps.json
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\bin\Debug\netstandard2.0\FUIAnalyzer.CodeFixes.dll
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\bin\Debug\netstandard2.0\FUIAnalyzer.CodeFixes.pdb
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\bin\Debug\netstandard2.0\FUIAnalyzer.dll
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\bin\Debug\netstandard2.0\FUIAnalyzer.pdb
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\obj\Debug\netstandard2.0\FUIAnalyzer.CodeFixes.csproj.AssemblyReference.cache
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\obj\Debug\netstandard2.0\FUIAnalyzer.CodeFixResources.resources
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\obj\Debug\netstandard2.0\FUIAnalyzer.CodeFixes.csproj.GenerateResource.cache
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\obj\Debug\netstandard2.0\FUIAnalyzer.CodeFixes.GeneratedMSBuildEditorConfig.editorconfig
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\obj\Debug\netstandard2.0\FUIAnalyzer.CodeFixes.AssemblyInfoInputs.cache
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\obj\Debug\netstandard2.0\FUIAnalyzer.CodeFixes.AssemblyInfo.cs
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\obj\Debug\netstandard2.0\FUIAnalyzer.CodeFixes.csproj.CoreCompileInputs.cache
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\obj\Debug\netstandard2.0\FUIAnaly.BDE08371.Up2Date
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\obj\Debug\netstandard2.0\FUIAnalyzer.CodeFixes.dll
+D:\FUIAnalyzer\FUIAnalyzer.CodeFixes\obj\Debug\netstandard2.0\FUIAnalyzer.CodeFixes.pdb

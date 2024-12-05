@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "FUIAnalyzer.Vsix": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

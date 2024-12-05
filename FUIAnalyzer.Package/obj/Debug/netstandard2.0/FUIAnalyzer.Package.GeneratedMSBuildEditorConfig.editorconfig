@@ -1,0 +1,5 @@
+is_global = true
+build_property.RootNamespace = FUIAnalyzer.Package
+build_property.ProjectDir = D:\FUIAnalyzer\FUIAnalyzer.Package\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
