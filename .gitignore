@@ -1,6 +1,4 @@
 .idea
-/*.csproj
-/*.sln
 .vs/
 
 src/bin/
