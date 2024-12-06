@@ -2,7 +2,8 @@
   "profiles": {
     "FUIAnalyzer.Vsix": {
       "commandName": "Project",
-      "nativeDebugging": true
+      "nativeDebugging": false,
+      "remoteDebugEnabled": false
     }
   }
 }

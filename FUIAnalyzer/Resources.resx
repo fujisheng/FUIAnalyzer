@@ -129,4 +129,7 @@
     <value>Type name contains lowercase letters</value>
     <comment>The title of the diagnostic.</comment>
   </data>
+  <data name="InvalidBinding" xml:space="preserve">
+    <value>can not convert property type to target type</value>
+  </data>
 </root>
