@@ -1,15 +1,12 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-using System.Collections.Immutable;
 using System.Linq;
 
 namespace FUIAnalyzer.AttributeBinding
 {
-    [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class TargetIsElementAnalyzer : DiagnosticAnalyzer
+    public partial class AttributeBindingAnalyzer
     {
         #region Rules
         /// <summary>
@@ -55,43 +52,52 @@ namespace FUIAnalyzer.AttributeBinding
             "The target must be assigned a value using 'nameof(Element.Property)'.");
         #endregion
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create
-            (TargetNotElementRule, 
-            TargetPropertyNotBindableRule, 
-            ConverterNotIConverterRule, 
+        /// <summary>
+        /// 属性绑定规则
+        /// </summary>
+        static readonly DiagnosticDescriptor[] PropertyBindingRules = new  DiagnosticDescriptor[]
+        {
+            TargetNotElementRule,
+            TargetPropertyNotBindableRule,
+            ConverterNotIConverterRule,
             PropertyToTargetWithoutConverterRule,
             PropertyToTargetWithConverterRule,
-            TargetMustBeNameOfRule);
+            TargetMustBeNameOfRule
+        };
 
-        public override void Initialize(AnalysisContext context)
-        {
-            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
-            context.EnableConcurrentExecution();
-            context.RegisterSyntaxNodeAction(AnalyzeProperty, SyntaxKind.PropertyDeclaration);
-        }
-
+        /// <summary>
+        /// 分析一个属性的绑定标签是否合法
+        /// </summary>
+        /// <param name="context"></param>
         void AnalyzeProperty(SyntaxNodeAnalysisContext context)
         {
-            if(!(context.Node is PropertyDeclarationSyntax property))
+            if (!(context.Node is PropertyDeclarationSyntax property))
             {
                 return;
             }
 
-            var attribute = property.AttributeLists.SelectMany((list) => list.Attributes)
-                .FirstOrDefault((a) => context.SemanticModel.GetTypeInfo(a).Type.IsType(typeof(FUI.BindingAttribute)));
-
-            if(attribute == null)
+            var attributes = property.AttributeLists.SelectMany((list) => list.Attributes);
+            foreach (var attribute in attributes)
             {
-                return;
+                if (context.SemanticModel.GetTypeInfo(attribute).Type.IsType(typeof(FUI.BindingAttribute)))
+                {
+                    AnalyzePropertyAttribute(context, property, attribute);
+                }
             }
+        }
 
+        /// <summary>
+        /// 分析属性的绑定标签是否合法
+        /// </summary>
+        void AnalyzePropertyAttribute(SyntaxNodeAnalysisContext context, PropertyDeclarationSyntax property, AttributeSyntax attribute)
+        {
             //解析Binding标签  判断是否合法
             var propertyType = context.SemanticModel.GetTypeInfo(property.Type).Type;
             var converterInfo = GetConverterType(context, attribute);
             var targetPropertyType = GetTargetPropertyType(context, attribute);
 
             //如果为空则返回
-            if(propertyType == null || targetPropertyType == null)
+            if (propertyType == null || targetPropertyType == null)
             {
                 return;
             }
@@ -108,7 +114,7 @@ namespace FUIAnalyzer.AttributeBinding
             else
             {
                 //如果有转换器，但是无法将属性类型转换成转换器源类型，或无法将转换器目标类型转换成绑定目标值类型
-                if (!propertyType.InheritsFromOrEquals(converterInfo.sourceType) 
+                if (!propertyType.InheritsFromOrEquals(converterInfo.sourceType)
                     || !converterInfo.targetType.InheritsFromOrEquals(targetPropertyType))
                 {
                     var diagnostic = Diagnostic.Create(PropertyToTargetWithConverterRule, attribute.GetLocation(), propertyType, converterInfo.sourceType, converterInfo.targetType, targetPropertyType);
@@ -118,10 +124,12 @@ namespace FUIAnalyzer.AttributeBinding
         }
 
         /// <summary>
-        /// 获取目标绑定属性的值类型
+        /// 获取绑定目标属性的类型信息
         /// </summary>
-        INamedTypeSymbol GetTargetPropertyType(SyntaxNodeAnalysisContext context, AttributeSyntax attribute)
+        TypeInfo? GetTargetPropertyTypeInfo(SyntaxNodeAnalysisContext context, AttributeSyntax attribute, out MemberAccessExpressionSyntax memberAccess)
         {
+            memberAccess = null;
+
             //找到nameof
             var targetArgs = attribute.ArgumentList.Arguments
                 .FirstOrDefault((item) => item.Expression is InvocationExpressionSyntax invocation
@@ -137,7 +145,7 @@ namespace FUIAnalyzer.AttributeBinding
 
             //找到nameof 里面的成员访问
             var targetInvocationArgs = targetArgs.Expression as InvocationExpressionSyntax;
-            var memberAccess = targetInvocationArgs.ArgumentList.Arguments[0].ChildNodes().OfType<MemberAccessExpressionSyntax>().FirstOrDefault();
+            memberAccess = targetInvocationArgs.ArgumentList.Arguments[0].ChildNodes().OfType<MemberAccessExpressionSyntax>().FirstOrDefault();
             if (memberAccess == null)
             {
                 return null;
@@ -145,19 +153,32 @@ namespace FUIAnalyzer.AttributeBinding
 
             //判断目标类型是否是IElement
             var targetTypeInfo = context.SemanticModel.GetTypeInfo(memberAccess.Expression);
-            if(targetTypeInfo.Type.AllInterfaces.FirstOrDefault((item) => item.ToString().StartsWith("FUI.IElement")) == null)
+            if (targetTypeInfo.Type.AllInterfaces.FirstOrDefault((item) => item.ToString().StartsWith("FUI.IElement")) == null)
             {
                 var diagnostic = Diagnostic.Create(TargetNotElementRule, memberAccess.Expression.GetLocation(), targetTypeInfo.Type);
                 context.ReportDiagnostic(diagnostic);
                 return null;
             }
 
+            return context.SemanticModel.GetTypeInfo(memberAccess.Name);
+        }
+
+        /// <summary>
+        /// 获取目标绑定属性的值类型
+        /// </summary>
+        INamedTypeSymbol GetTargetPropertyType(SyntaxNodeAnalysisContext context, AttributeSyntax attribute)
+        {
             //判断目标成员类型是否是BindableProperty
-            var targetPropertyType = context.SemanticModel.GetTypeInfo(memberAccess.Name);
-            var @interface = targetPropertyType.Type.AllInterfaces.FirstOrDefault(item => item.IsGenericType && item.ToString().StartsWith("FUI.Bindable.IBindableProperty"));
-            if(@interface == null)
+            var targetPropertyTypeInfo = GetTargetPropertyTypeInfo(context, attribute, out var memberAccess);
+            if(targetPropertyTypeInfo == null)
             {
-                var diagnostic = Diagnostic.Create(TargetPropertyNotBindableRule, memberAccess.Name.GetLocation(), targetPropertyType.Type);
+                return default;
+            }
+
+            var @interface = targetPropertyTypeInfo.Value.Type.AllInterfaces.FirstOrDefault(item => item.IsGenericType && item.ToString().StartsWith("FUI.Bindable.IBindableProperty"));
+            if (@interface == null)
+            {
+                var diagnostic = Diagnostic.Create(TargetPropertyNotBindableRule, memberAccess.Name.GetLocation(), targetPropertyTypeInfo.Value.Type);
                 context.ReportDiagnostic(diagnostic);
                 return null;
             }
@@ -189,7 +210,7 @@ namespace FUIAnalyzer.AttributeBinding
             var interfaces = typeInfo.Type.AllInterfaces.FirstOrDefault(item => item.IsGenericType && item.ToString().StartsWith("FUI.IValueConverter"));
 
             //如果不继承 则报错
-            if(interfaces == null)
+            if (interfaces == null)
             {
                 var diagnostic = Diagnostic.Create(ConverterNotIConverterRule, typeofExpression.Type.GetLocation(), typeInfo.Type);
                 context.ReportDiagnostic(diagnostic);

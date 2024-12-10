@@ -31,5 +31,20 @@
         /// 目标字段字符串赋值必须使用nameof(xxx.yyy)
         /// </summary>
         internal const string TargetMustBeNameOfRuleId = "FUI0006";
+
+        /// <summary>
+        /// 命令参数不匹配
+        /// </summary>
+        internal const string CommandParameterMismatchRuleId = "FUI0007";
+
+        /// <summary>
+        /// 绑定目标不是ObservableObject
+        /// </summary>
+        internal const string BindingObjectNotObservableObjectRuleId = "FUI0008";
+
+        /// <summary>
+        /// 绑定对象参数个数不为1
+        /// </summary>
+        internal const string BindingObjectArgsCountNotOneRuleId = "FUI0009";
     }
 }

@@ -1,11 +1,8 @@
 ﻿using Microsoft.CodeAnalysis;
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace FUIAnalyzer
 {
@@ -102,6 +99,18 @@ namespace FUIAnalyzer
                 }
             }
 
+            return false;
+        }
+
+        public static bool InheritsFrom(this ITypeSymbol type, Type baseType)
+        {
+            foreach (var t in type.GetBaseTypesAndThis())
+            {
+                if (t.IsType(baseType))
+                {
+                    return true;
+                }
+            }
             return false;
         }
     }
