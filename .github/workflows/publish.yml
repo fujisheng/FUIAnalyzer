@@ -36,8 +36,8 @@ jobs:
         run: msbuild /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
         
       - name: List output directory
-          run: dir FUIAnalyzer.Vsix\bin\Release /s
-          
+        run: dir FUIAnalyzer.Vsix\bin\Release /s
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
