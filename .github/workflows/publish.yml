@@ -33,17 +33,25 @@ jobs:
         run: nuget restore
         
       - name: Build
-        run: msbuild FUIAnalyzer.Vsix\FUIAnalyzer.Vsix.csproj /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal /p:OutputPath=${{github.workspace}}\publish
+        run: |
+          msbuild FUIAnalyzer.Vsix\FUIAnalyzer.Vsix.csproj `
+          /p:configuration=Release `
+          /p:DeployExtension=false `
+          /p:ZipPackageCompressionLevel=normal `
+          /p:OutputPath="${{github.workspace}}\artifacts"
 
-      # - name: Rename output file
-      #   run: |
-      #     Move-Item -Path "${{github.workspace}}\publish\FUIAnalyzer.Vsix.vsix" -Destination "${{github.workspace}}\publish\FUIAnalyzer.vsix" -Force
-      #   shell: pwsh
+      - name: List files
+        run: |
+          Write-Host "Current location:"
+          Get-Location
+          Write-Host "Listing workspace directory:"
+          Get-ChildItem -Path ${{github.workspace}} -Recurse -Filter *.vsix
+        shell: pwsh
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{github.workspace}}/publish/*.vsix
+          files: ./artifacts/*.vsix
           name: FUIAnalyzer-${{ env.VERSION }}
           draft: false
           prerelease: false
