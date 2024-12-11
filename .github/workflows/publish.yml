@@ -38,7 +38,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: FUIAnalyzer.Vsix\bin\Release\FUIAnalyzer.Vsix.vsix
+          files: FUIAnalyzer.Vsix\bin\Release\net472\FUIAnalyzer.Vsix.vsix
           name: Release ${{ env.VERSION }}
           draft: false
           prerelease: false
