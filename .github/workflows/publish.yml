@@ -35,10 +35,6 @@ jobs:
       - name: Build
         run: msbuild FUIAnalyzer.Vsix\FUIAnalyzer.Vsix.csproj /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal /p:OutputPath=${{github.workspace}}\publish
 
-      - name: List files in publish directory
-        run: Get-ChildItem -Path "${{github.workspace}}\publish" -Recurse
-        shell: pwsh
-
       - name: Rename output file
         run: |
           Move-Item -Path "${{github.workspace}}\publish\FUIAnalyzer.Vsix.vsix" -Destination "${{github.workspace}}\publish\FUIAnalyzer.vsix" -Force
@@ -47,7 +43,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{github.workspace}}/publish/FUIAnalyzer.vsix
+          files: ${{github.workspace}}\publish\FUIAnalyzer.vsix
           name: FUIAnalyzer-${{ env.VERSION }}
           draft: false
           prerelease: false
