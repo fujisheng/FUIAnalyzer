@@ -1,0 +1,46 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - 'v*' # 匹配所有以v开头的tag，比如 v1.0.0
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+        
+      - name: Add nuget to PATH
+        uses: nuget/setup-nuget@v1
+        
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.0.2
+        
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+        shell: bash
+        
+      - name: Update version
+        run: |
+          (Get-Content -Path FUIAnalyzer.Vsix\source.extension.vsixmanifest) |
+            ForEach-Object {$_ -Replace '1.0.0', '${{ env.VERSION }}'} |
+              Set-Content -Path FUIAnalyzer.Vsix\source.extension.vsixmanifest
+              
+      - name: Restore
+        run: nuget restore
+        
+      - name: Build
+        run: msbuild /p:configuration=Release /p:DeployExtension=false /p:ZipPackageCompressionLevel=normal
+        
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: FUIAnalyzer.Vsix\bin\Release\FUIAnalyzer.Vsix.vsix
+          name: Release ${{ env.VERSION }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
