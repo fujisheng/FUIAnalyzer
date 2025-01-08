@@ -60,7 +60,7 @@ namespace FUIAnalyzer.AttributeBinding
                 return;
             }
 
-            if (!namedType.InheritsFrom(typeof(FUI.Bindable.ObservableObject)))
+            if (!namedType.IsObservableObject())
             {
                 var diagnostic = Diagnostic.Create(BindingObjectNotObservableObjectRule, attribute.GetLocation(), namedType.ToString());
                 context.ReportDiagnostic(diagnostic);

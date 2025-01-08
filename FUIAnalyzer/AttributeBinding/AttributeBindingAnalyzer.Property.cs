@@ -62,7 +62,7 @@ namespace FUIAnalyzer.AttributeBinding
             ConverterNotIConverterRule,
             PropertyToTargetWithoutConverterRule,
             PropertyToTargetWithConverterRule,
-            TargetMustBeNameOfRule
+            TargetMustBeNameOfRule,
         };
 
         /// <summary>
@@ -102,10 +102,16 @@ namespace FUIAnalyzer.AttributeBinding
                 return;
             }
 
+            //如果属性和目标值类型都是可绑定列表，不进行下面的判断
+            if (propertyType.IsObservableList() && targetPropertyType.IsObservableList())
+            {
+                return;
+            }
+
             if (converterInfo == default)
             {
                 //如果没有转换器且属性类型无法转换成目标值类型
-                if (!propertyType.InheritsFromOrEquals(targetPropertyType))
+                if (!propertyType.Extends(targetPropertyType))
                 {
                     var diagnostic = Diagnostic.Create(PropertyToTargetWithoutConverterRule, attribute.GetLocation(), propertyType, targetPropertyType);
                     context.ReportDiagnostic(diagnostic);
@@ -114,8 +120,8 @@ namespace FUIAnalyzer.AttributeBinding
             else
             {
                 //如果有转换器，但是无法将属性类型转换成转换器源类型，或无法将转换器目标类型转换成绑定目标值类型
-                if (!propertyType.InheritsFromOrEquals(converterInfo.sourceType)
-                    || !converterInfo.targetType.InheritsFromOrEquals(targetPropertyType))
+                if (!propertyType.Extends(converterInfo.sourceType)
+                    || !converterInfo.targetType.Extends(targetPropertyType))
                 {
                     var diagnostic = Diagnostic.Create(PropertyToTargetWithConverterRule, attribute.GetLocation(), propertyType, converterInfo.sourceType, converterInfo.targetType, targetPropertyType);
                     context.ReportDiagnostic(diagnostic);
@@ -153,7 +159,7 @@ namespace FUIAnalyzer.AttributeBinding
 
             //判断目标类型是否是IElement
             var targetTypeInfo = context.SemanticModel.GetTypeInfo(memberAccess.Expression);
-            if (targetTypeInfo.Type.AllInterfaces.FirstOrDefault((item) => item.ToString().StartsWith("FUI.IElement")) == null)
+            if(!targetTypeInfo.Type.Extends(typeof(FUI.IElement)))
             {
                 var diagnostic = Diagnostic.Create(TargetNotElementRule, memberAccess.Expression.GetLocation(), targetTypeInfo.Type);
                 context.ReportDiagnostic(diagnostic);
@@ -175,8 +181,8 @@ namespace FUIAnalyzer.AttributeBinding
                 return default;
             }
 
-            var @interface = targetPropertyTypeInfo.Value.Type.AllInterfaces.FirstOrDefault(item => item.IsGenericType && item.ToString().StartsWith("FUI.Bindable.IBindableProperty"));
-            if (@interface == null)
+            //如果不是则报错
+            if(!targetPropertyTypeInfo.Value.Type.IsBindableProperty(out var targetValueType))
             {
                 var diagnostic = Diagnostic.Create(TargetPropertyNotBindableRule, memberAccess.Name.GetLocation(), targetPropertyTypeInfo.Value.Type);
                 context.ReportDiagnostic(diagnostic);
@@ -184,8 +190,7 @@ namespace FUIAnalyzer.AttributeBinding
             }
 
             //获取目标成员值类型
-            var targetValueType = @interface.TypeArguments[0] as INamedTypeSymbol;
-            return targetValueType;
+            return targetValueType as INamedTypeSymbol;
         }
 
         /// <summary>
@@ -207,10 +212,7 @@ namespace FUIAnalyzer.AttributeBinding
             var typeInfo = context.SemanticModel.GetTypeInfo(typeofExpression.Type);
 
             //判断是否继承自IValueConverter<>
-            var interfaces = typeInfo.Type.AllInterfaces.FirstOrDefault(item => item.IsGenericType && item.ToString().StartsWith("FUI.IValueConverter"));
-
-            //如果不继承 则报错
-            if (interfaces == null)
+            if(!typeInfo.Type.IsValueConverter(out var sourceType, out var targetType))
             {
                 var diagnostic = Diagnostic.Create(ConverterNotIConverterRule, typeofExpression.Type.GetLocation(), typeInfo.Type);
                 context.ReportDiagnostic(diagnostic);
@@ -218,9 +220,7 @@ namespace FUIAnalyzer.AttributeBinding
             }
 
             //返回其sourcesType和targetType
-            var sourceType = interfaces.TypeArguments[0] as INamedTypeSymbol;
-            var targetType = interfaces.TypeArguments[1] as INamedTypeSymbol;
-            return (sourceType, targetType);
+            return (sourceType as INamedTypeSymbol, targetType as INamedTypeSymbol);
         }
     }
 }
